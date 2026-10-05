@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة عرض نداء الطالبات - المدرسة الثانوية</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a252f; color: white; padding: 20px; margin: 0; text-align: center; }
+        h1 { color: #2ecc71; margin-bottom: 30px; font-size: 36px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; }
+        .card { background: #2c3e50; border-right: 8px solid #e74c3c; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: right; position: relative; animation: fadeIn 0.5s ease-in-out; }
+        .student-name { font-size: 26px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .student-info { font-size: 18px; color: #bdc3c7; }
+        .time { font-size: 14px; color: #7f8c8d; text-align: left; margin-top: 10px; }
+        .delete-btn { position: absolute; top: 15px; left: 15px; background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .delete-btn:hover { background: #c0392b; }
+        .no-calls { font-size: 24px; color: #7f8c8d; margin-top: 100px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <h1>📢 شاشة نداء الطالبات الفورية</h1>
+    <div id="noCallsMessage" class="no-calls">لا توجد نداءات حالياً.. الساحة مستقرة</div>
+    
+    <div class="grid" id="callsGrid"></div>
+
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getDatabase, ref, onValue, remove } from "https://gstatic.com";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwzqJVd_1r1fBY3p-7KfCNnYPpX6rGtWE",
+        authDomain: "://firebaseapp.com",
+        databaseURL: "https://nidaa-school-2nd-default-rtdb.firebaseio.com/:null",
+        projectId: "nidaa-school-2nd",
+        storageBucket: "nidaa-school-2nd.firebasestorage.app",
+        messagingSenderId: "396441687561",
+        appId: "1:396441687561:web:07ad6488bd58b58b6d8ad8",
+        measurementId: "G-P8PSHZ38KX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const callsRef = ref(db, 'calls');
+
+    let currentCallsCount = 0;
+
+    onValue(callsRef, (snapshot) => {
+        const grid = document.getElementById('callsGrid');
+        const noCallsMsg = document.getElementById('noCallsMessage');
+        grid.innerHTML = "";
+        
+        if (snapshot.exists()) {
+            noCallsMsg.style.display = 'none';
+            const data = snapshot.val();
+            const keys = Object.keys(data);
+            if (keys.length > currentCallsCount) { playNotificationSound(); }
+            currentCallsCount = keys.length;
+
+            for (let key in data) {
+                const call = data[key];
+                let timeString = "";
+                if(call.timestamp){
+                    const date = new Date(call.timestamp);
+                    timeString = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="window.deleteCall('${key}')">خروج ✖</button>
+                    <div class="student-name">${call.studentName}</div>
+                    <div class="student-info">${call.studentGrade} - ${call.studentClass}</div>
+                    <div class="time">${timeString}</div>
+                `;
+                grid.appendChild(card);
+            }
+        } else {
+            noCallsMsg.style.display = 'block';
+            currentCallsCount = 0;
+        }
+    });
+
+    window.deleteCall = function(id) { remove(ref(db, 'calls/' + id)); };
+
+    function playNotificationSound() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(587.33, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        oscillator.start(); oscillator.stop(audioContext.currentTime + 0.15);
+    }
+</script>
+
+</body>
+</html>
+

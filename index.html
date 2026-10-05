@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام نداء الطالبات - المرحلة الثانوية</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; text-align: center; padding: 20px; color: #333; }
+        .container { max-width: 400px; background: white; padding: 30px; margin: 40px auto; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; margin-bottom: 25px; }
+        label { display: block; text-align: right; margin: 10px 0 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #219653; }
+        .alert { display: none; padding: 15px; margin-top: 20px; border-radius: 5px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>نظام نداء الطالبات الرقمي</h2>
+    <p style="color: #666; font-size: 14px;">يرجى كتابة بيانات ابنتكِ لإرسال نداء فوري للمدرسة</p>
+    
+    <label>اسم الطالبة ثلاثي:</label>
+    <input type="text" id="studentName" placeholder="أدخل اسم الطالبة">
+
+    <label>السنة الدراسية:</label>
+    <select id="grade">
+        <option value="">اختر السنة الدراسية...</option>
+        <option value="أول ثانوي">أول ثانوي</option>
+        <option value="ثاني ثانوي">ثاني ثانوي</option>
+        <option value="ثالث ثانوي">ثالث ثانوي</option>
+    </select>
+
+    <label>الصف / المسار:</label>
+    <input type="text" id="classRoom" placeholder="مثال: 101، عام، حاسب، صحة">
+
+    <button id="sendBtn">إرسال النداء 📢</button>
+    <div id="statusAlert" class="alert success">تم إرسال النداء بنجاح! يرجى الانتظار عند البوابة.</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getDatabase, ref, push, serverTimestamp } from "https://gstatic.com";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwzqJVd_1r1fBY3p-7KfCNnYPpX6rGtWE",
+        authDomain: "://firebaseapp.com",
+        databaseURL: "https://nidaa-school-2nd-default-rtdb.firebaseio.com/:null",
+        projectId: "nidaa-school-2nd",
+        storageBucket: "nidaa-school-2nd.firebasestorage.app",
+        messagingSenderId: "396441687561",
+        appId: "1:396441687561:web:07ad6488bd58b58b6d8ad8",
+        measurementId: "G-P8PSHZ38KX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    document.getElementById('sendBtn').addEventListener('click', function() {
+        const name = document.getElementById('studentName').value.trim();
+        const grade = document.getElementById('grade').value;
+        const classroom = document.getElementById('classRoom').value.trim();
+        const alertBox = document.getElementById('statusAlert');
+
+        if(name === "" || grade === "" || classroom === "") {
+            alert("يرجى تعبئة جميع الحقول قبل إرسال النداء!");
+            return;
+        }
+
+        push(ref(db, 'calls'), {
+            studentName: name,
+            studentGrade: grade,
+            studentClass: classroom,
+            timestamp: serverTimestamp()
+        }).then(() => {
+            alertBox.style.display = 'block';
+            document.getElementById('studentName').value = "";
+            document.getElementById('grade').value = "";
+            document.getElementById('classRoom').value = "";
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+        });
+    });
+</script>
+
+</body>
+</html>
+
